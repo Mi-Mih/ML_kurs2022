@@ -5,6 +5,7 @@ from custom_catboost_regress import CustomCatBoostRegressor
 from custom_catboost_classifier import CustomCatBoostClassifier
 from sklearn.preprocessing import FunctionTransformer
 from metrics import result
+from sklearn.model_selection import train_test_split
 
 warnings.filterwarnings("ignore")
 
@@ -42,30 +43,25 @@ def get_time_features(df):
 def main():
     df = pd.read_csv('train_dataset_train.csv', sep=',')
 
-    horizon = 30
-    x_regress_train = df.drop(columns=['time_to_under'])
-    y_regress_train = df[['time_to_under']]
+    df.dropna(inplace=True)
+    df = df.loc[df.time_to_under > 0]
 
-    x_regress_test = x_regress_train[-horizon:]
-    y_regress_test = y_regress_train[-horizon:]
+    x_regress_train, x_regress_test, y_regress_train, y_regress_test = train_test_split(
+        df.drop(columns=['time_to_under']), df[['time_to_under']], test_size=0.3)
 
     pipe_regression = Pipeline(steps=[('preprocess', FunctionTransformer(preprocess_regress)),
                                       ('time_features', FunctionTransformer(get_time_features)),
-                                      ('model', CustomCatBoostRegressor(20))])
+                                      ('model', CustomCatBoostRegressor(1000))])
     pipe_regression.fit(x_regress_train, y_regress_train)
     forecast_regress = pipe_regression.predict(x_regress_test)
 
-    horizon = 30
-    x_multiclass_train = df.drop(columns=['label'])[:100]
-    y_multiclass_train = df[['label']][:100]
+    x_multiclass_train, x_multiclass_test, y_multiclass_train, y_multiclass_test = train_test_split(
+        df.drop(columns=['label'])[:600], df[['label']][:600], test_size=0.3, random_state=42)
 
-    x_multiclass_test = x_multiclass_train[-horizon:]
-    y_multiclass_test = y_multiclass_train[-horizon:]
-
-    pipe_regression = Pipeline(steps=[('preprocess', FunctionTransformer(preprocess_multiclass)),
-                                      ('model', CustomCatBoostClassifier(10))])
-    pipe_regression.fit(x_multiclass_train, y_multiclass_train)
-    forecast_class = pipe_regression.predict(x_multiclass_test)
+    pipe_multiclass = Pipeline(steps=[('preprocess', FunctionTransformer(preprocess_multiclass)),
+                                      ('model', CustomCatBoostClassifier(100))])
+    pipe_multiclass.fit(x_multiclass_train, y_multiclass_train)
+    forecast_class = pipe_multiclass.predict(x_multiclass_test)
 
     final = result(y_multiclass_test, forecast_class, y_regress_test, forecast_regress)
     print(final)
