@@ -36,5 +36,8 @@ class CustomCatBoostRegressor(CatBoostRegressor):
         self.y = y
         if self.cv_numb>1:
            self.launch_cv()
+        else:
+            self.set_params(iterations=self.iterations)
+
         super().fit(self.x, self.y, cat_features=['ticket_type_nm', 'station_nm', 'line_nm', 'entrance_nm'])
 
