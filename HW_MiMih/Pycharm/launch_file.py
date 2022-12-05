@@ -51,12 +51,12 @@ def main():
 
     pipe_regression = Pipeline(steps=[('preprocess', FunctionTransformer(preprocess_regress)),
                                       ('time_features', FunctionTransformer(get_time_features)),
-                                      ('model', CustomCatBoostRegressor(1000))])
+                                      ('model', CustomCatBoostRegressor(10,1))])
     pipe_regression.fit(x_regress_train, y_regress_train)
     forecast_regress = pipe_regression.predict(x_regress_test)
 
     x_multiclass_train, x_multiclass_test, y_multiclass_train, y_multiclass_test = train_test_split(
-        df.drop(columns=['label'])[:600], df[['label']][:600], test_size=0.3, random_state=42)
+        df.drop(columns=['label'])[:1000], df[['label']][:1000], test_size=0.3, random_state=0)
 
     pipe_multiclass = Pipeline(steps=[('preprocess', FunctionTransformer(preprocess_multiclass)),
                                       ('model', CustomCatBoostClassifier(100))])
