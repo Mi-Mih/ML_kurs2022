@@ -7,15 +7,15 @@ warnings.filterwarnings("ignore")
 
 
 class CustomCatBoostRegressor(CatBoostRegressor):
-    def __init__(self, iterations=1000, cv_numb=2):
+    def __init__(self, iterations=1000, cv_numb=1):
         super(CatBoostRegressor, self).__init__()
         '''
         iterations: число деревьев
         '''
         self.y = None
         self.x = None
-        self.cv_numb = cv_numb
         self.iterations = iterations
+        self.cv_numb = cv_numb
 
     # кросс-валидация для определения оптимального числа деревьев
     def launch_cv(self, metric='MAPE'):
@@ -34,10 +34,7 @@ class CustomCatBoostRegressor(CatBoostRegressor):
             log_cout=sys.stdout, log_cerr=sys.stderr):
         self.x = X
         self.y = y
-        if self.cv_numb>1:
-           self.launch_cv()
-        else:
-            self.set_params(iterations=self.iterations)
-
+        self.set_params(iterations=self.iterations)
+        if self.cv_numb >1:
+            self.launch_cv()
         super().fit(self.x, self.y, cat_features=['ticket_type_nm', 'station_nm', 'line_nm', 'entrance_nm'])
-
